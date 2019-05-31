@@ -46,6 +46,8 @@ void rotate(int direction){
     delayMicroseconds(100);
     pos += 2 * direction - 1;
     if (pos == destination){
-      Serial.println(pos);
+      Serial.print("S");
+      Serial.print(pos);
+      Serial.println("E");
     }
 }
