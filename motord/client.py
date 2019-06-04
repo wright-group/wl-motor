@@ -1,4 +1,7 @@
 import socket
+import json
+
+BUFFSIZE = 4096
 
 class Client:
     
@@ -10,18 +13,28 @@ class Client:
         self._socket.close()
 
     def home(self):
-        self._socket.sendall(b"home")
-        message = self._socket.recv(1024)
+        self._socket.sendall(json.dumps({"command":"home"}).encode())
+        message = self._socket.recv(BUFFSIZE)
+        print(message)
 
     def move_abs(self, position):
-        self._socket.sendall(f"move_abs {position}".encode())
-        message = self._socket.recv(1024)
+        self._socket.sendall(json.dumps({"command":"move_abs", "value":position}).encode())
+        message = self._socket.recv(BUFFSIZE)
+        print(message)
 
     def move_rel(self, diff):
-        self._socket.sendall(f"move_rel {diff}".encode())
-        message = self._socket.recv(1024)
+        self._socket.sendall(json.dumps({"command":"move_rel", "value":diff}).encode())
+        message = self._socket.recv(BUFFSIZE)
+        print(message)
 
     def position(self):
-        self._socket.sendall(b"position")
-        message = self._socket.recv(1024)
-        return int(message.decode())
+        self._socket.sendall(json.dumps({"command":"position"}).encode())
+        message = self._socket.recv(BUFFSIZE)
+        print(message)
+        return json.loads(message)["result"]
+
+    def is_busy(self):
+        self._socket.sendall(json.dumps({"command":"is_busy"}).encode())
+        message = self._socket.recv(BUFFSIZE)
+        print(message)
+        return json.loads(message)["result"]

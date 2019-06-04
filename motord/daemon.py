@@ -2,6 +2,8 @@
 import asyncio
 import serial
 import struct
+import time
+import json
 
 _position = 0
 _destination = 0
@@ -11,7 +13,7 @@ _port = serial.Serial("/dev/ttyUSB0", timeout=0, baudrate=57600)
 
 
 async def update_state():
-    global _position, _limit_status, _stopped, _port
+    global _destination, _position, _limit_status, _stopped, _port
     overflow = b""
     while True:
         if _port.in_waiting:
@@ -29,9 +31,8 @@ async def update_state():
                 continue
             _stopped = True
             _position = new_position
+            _destination = _position
             print(f"Update State: {_position}, {_stopped}, {overflow}")
-        else:
-            _stopped = _position == _destination
         await asyncio.sleep(0.01)
 
 
@@ -39,12 +40,13 @@ def home():
     raise NotImplementedError
 
 def move_abs(position):
+    global _destination, _port, _stopped
     _destintation = position
-    _port.write(str(position).encode())
+    _port.write(str(position).encode() + b'\n')
     _stopped = False
 
 def move_rel(diff):
-    move_abs(_position + diff)
+    move_abs(_destination + diff)
 
 def is_busy():
     return not _stopped
@@ -61,23 +63,30 @@ class MotorServerProtocol(asyncio.Protocol):
         self.transport = transport
 
     def data_received(self, data):
-        message = data.decode()
-        print('Data received: {!r}'.format(message))
+        print('Data received: {!r}'.format(data))
+        response = {}
+        try:
+            request = json.loads(data)
+            command = request["command"]
+            response = {"ok": True, "command": command}
 
-        if message.startswith("home"):
-            home()
-            self.transport.write(f"SUCCESS: {message}".encode())
-        elif message.startswith("move_abs"):
-            move_abs(int(message[8:]))
-            self.transport.write(f"SUCCESS: {message}".encode())
-        elif message.startswith("move_rel"):
-            move_rel(int(message[8:]))
-            self.transport.write(f" SUCCESS: {message}".encode())
-        elif message.startswith("position"):
-            self.transport.write(str(get_position()).encode())
-            self.transport.write(f"SUCCESS: {message}".encode())
-        else:
-            self.transport.write("ERROR: unrecognized command".encode())
+            if command == "home":
+                home()
+            elif command == "move_abs":
+                move_abs(request["value"])
+            elif command == "move_rel":
+                move_rel(request["value"])
+            elif command == "position":
+                response["result"] = get_position()
+            elif command == "is_busy":
+                response["result"] = is_busy()
+            else:
+                response["ok"] = False
+                response["reason"] = "unrecognized command"
+        except Exception as e:
+            response["ok"] = False
+            response["reason"] = repr(e)
+        self.transport.write(json.dumps(response).encode())
 
 
 
