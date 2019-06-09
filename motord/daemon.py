@@ -1,21 +1,20 @@
 #! /usr/bin/env python3
+import asyncio
+
 import serial
 from yaq_daemon_core import hardware
 
 class WlMotorDaemon(hardware.BaseHardwareDaemon):
-    def __init__(self):
-        super().__init__()
-        self.name = "WlMotorDaemon"
-        self.make = "Wright Group"
-        self.units = None
+    def __init__(self, name, config, config_filepath):
+        super().__init__(name, config, config_filepath)
 
         self.limit_status = False
-        self._port = serial.Serial("/dev/ttyUSB0", timeout=0, baudrate=57600)
+        self._port = serial.Serial(config["com_port"], timeout=0, baudrate=config["baud_rate"])
 
     def _set_position(self, position):
         self._port.write(str(position).encode() + b"\n")
 
-    async def _update_state(self):
+    async def update_state(self):
         overflow = b""
         while True:
             if self._port.in_waiting:
@@ -36,4 +35,5 @@ class WlMotorDaemon(hardware.BaseHardwareDaemon):
                 self._destination = self._position
             await asyncio.sleep(0.01)
 
-
+if __name__ == "__main__":
+    WlMotorDaemon.main()

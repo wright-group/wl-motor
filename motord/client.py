@@ -18,10 +18,10 @@ class Client:
             if hasattr(self, c):
                 continue
 
-            def fun(c):
-                return lambda *args, **kwargs: self.send(c, *args, **kwargs)
+            def fun(comm):
+                return lambda *args, **kwargs: self.send(comm, *args, **kwargs)
 
-            setattr(self, c, fun(c)())
+            setattr(self, c, fun(c))
             getattr(self, c).__doc__ = d
 
     def help(self, command=None):
