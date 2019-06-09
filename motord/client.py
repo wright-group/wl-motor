@@ -4,51 +4,39 @@ import json
 BUFFSIZE = 4096
 
 
+class YaqDaemonException(Exception):
+    pass
+
+
 class Client:
-    def __init__(self, port=19853):
+    def __init__(self, port, host="127.0.0.1"):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.connect(("127.0.0.1", port))
+        self._socket.connect((host, port))
 
-    def close(self):
-        self._socket.sendall(json.dumps({"command": "close"}).encode())
-        message = self._socket.recv(BUFFSIZE)
-        print(message)
-        self._socket.close()
+        commands = self.send("list_commands")
+        for c, d in zip(commands, self.send("help", commands)):
+            if hasattr(self, c):
+                continue
 
-    def home(self):
-        self._socket.sendall(json.dumps({"command": "home"}).encode())
-        message = self._socket.recv(BUFFSIZE)
-        print(message)
+            def fun(c):
+                return lambda *args, **kwargs: self.send(c, *args, **kwargs)
 
-    def set_position(self, position):
-        self._socket.sendall(
-            json.dumps({"command": "set_position", "args": [position]}).encode()
-        )
-        message = self._socket.recv(BUFFSIZE)
-
-    def get_position(self):
-        self._socket.sendall(json.dumps({"command": "get_position"}).encode())
-        message = self._socket.recv(BUFFSIZE)
-        return json.loads(message)["result"]
-
-    def get_destination(self):
-        self._socket.sendall(json.dumps({"command": "get_destination"}).encode())
-        message = self._socket.recv(BUFFSIZE)
-        return json.loads(message)["result"]
-
-    def busy(self):
-        self._socket.sendall(json.dumps({"command": "busy"}).encode())
-        message = self._socket.recv(BUFFSIZE)
-        return json.loads(message)["result"]
+            setattr(self, c, fun(c)())
+            getattr(self, c).__doc__ = d
 
     def help(self, command=None):
-        self._socket.sendall(
-            json.dumps({"command": "help", "args": [command]}).encode()
-        )
-        message = self._socket.recv(BUFFSIZE)
-        print(json.loads(message)["result"])
+        print(self.send("help", command))
 
-    def list_commands(self):
-        self._socket.sendall(json.dumps({"command": "list_commands"}).encode())
+    def send(self, command, *args, **kwargs):
+        message = {"command": command, "args": args, "kwargs": kwargs}
+        if len(args) == 0:
+            message.pop("args")
+        if len(kwargs) == 0:
+            message.pop("kwargs")
+        self._socket.sendall(json.dumps(message).encode())
         message = self._socket.recv(BUFFSIZE)
-        return json.loads(message)["result"]
+        message = json.loads(message)
+        if not message["ok"]:
+            raise YaqDaemonException(message["reason"])
+        if "result" in message:
+            return message["result"]
