@@ -30,7 +30,7 @@ class WlMotorDaemon(hardware.BaseHardwareDaemon):
                     print("Exception occurred", e)
                     overflow = message
                     continue
-                self._busy = False
+                self._not_busy.set()
                 self._position = new_position
                 self._destination = self._position
             await asyncio.sleep(0.01)
