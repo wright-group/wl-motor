@@ -5,6 +5,7 @@ import yaq_serial
 from yaqd_core import hardware
 
 class WlMotorDaemon(hardware.ContinuousHardwareDaemon):
+    _kind = "wl-motor"
     defaults = {"baudrate": 57600}
 
     def __init__(self, name, config, config_filepath):
@@ -20,7 +21,6 @@ class WlMotorDaemon(hardware.ContinuousHardwareDaemon):
     async def update_state(self):
         overflow = b""
         async for line in self._port.areadlines():
-            print("UPDATE STATE", line)
             line = line.replace(b"S", b"").replace(b"E",b"")
             self._position = float(line)
             self._not_busy.set()
