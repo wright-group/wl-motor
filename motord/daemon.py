@@ -2,7 +2,7 @@
 import asyncio
 
 import yaq_serial
-from yaqd_core import hardware
+from yaqd_core import hardware, set_action
 
 class WlMotorDaemon(hardware.ContinuousHardwareDaemon):
     _kind = "wl-motor"
@@ -22,9 +22,16 @@ class WlMotorDaemon(hardware.ContinuousHardwareDaemon):
         overflow = b""
         async for line in self._port.areadlines():
             line = line.replace(b"S", b"").replace(b"E",b"")
-            self._position = float(line)
-            self._not_busy.set()
-            self._destintation = self._position
+            try:
+                self._position = float(line)
+                self._busy = False
+                self._destintation = self._position
+            except:
+                pass
+
+    @set_action
+    def home(self):
+        self._port.write(b"H")
 
 if __name__ == "__main__":
     WlMotorDaemon.main()
