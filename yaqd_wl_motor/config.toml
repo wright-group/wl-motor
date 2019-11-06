@@ -1,4 +1,0 @@
-[wl_motor]
-com_port = "/dev/ttyUSB0"
-baudrate = 57600
-port=39853
