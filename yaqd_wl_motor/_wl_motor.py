@@ -1,10 +1,8 @@
 #! /usr/bin/env python3
-import asyncio
-
 import yaq_serial
-from yaqd_core import hardware, set_action
+import yaqd_core
 
-class WlMotorDaemon(hardware.ContinuousHardwareDaemon):
+class WlMotor(yaqd_core.ContinuousHardware):
     _kind = "wl-motor"
     defaults = {"baudrate": 57600}
 
@@ -29,7 +27,7 @@ class WlMotorDaemon(hardware.ContinuousHardwareDaemon):
             except:
                 pass
 
-    @set_action
+    @yaqd_core.set_action
     def home(self):
         self._port.write(b"H")
 
