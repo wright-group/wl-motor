@@ -30,8 +30,8 @@ class WlMotor(yaqd_core.ContinuousHardware):
             except:
                 pass
 
-    @yaqd_core.set_action
     def home(self):
+        self._busy = True
         self._port.write(b"H")
 
 
