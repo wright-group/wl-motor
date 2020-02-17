@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
 import yaq_serial  # type: ignore
-import yaqd_core
+from yaqd_core import ContinuousHardware
 
 
-class WlMotor(yaqd_core.ContinuousHardware):
+class WlMotor(ContinuousHardware):
     _kind = "wl-motor"
     defaults = {"baudrate": 57600}
 
