@@ -20,8 +20,6 @@ setup(
     packages=find_packages(exclude=("tests", "tests.*")),
     package_data=extra_files,
     python_requires=">=3.7",
-    setup_requires=["pytest-runner"],
-    tests_require=["pytest", "pytest-cov"],
     install_requires=["yaqd-core", "yaq-serial"],
     extras_require={
         "docs": ["sphinx", "sphinx-gallery>=0.3.0", "sphinx-rtd-theme"],
@@ -33,7 +31,9 @@ setup(
     author="yaq Developers",
     license="LGPL v3",
     url="https://github.com/wright-group/wl-motor",
-    entry_points={"console_scripts": ["yaqd-wl-motor=yaqd_wl_motor._wl_motor:WlMotor.main"]},
+    entry_points={
+        "console_scripts": ["yaqd-wl-motor=yaqd_wl_motor._wl_motor:WlMotor.main"]
+    },
     keywords="spectroscopy science multidimensional hardware",
     classifiers=[
         "Development Status :: 1 - Planning",
